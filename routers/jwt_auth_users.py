@@ -11,7 +11,7 @@ from datetime import datetime, timedelta
 
 ALGORITHM = "HS256"
 ACCESS_TOKEN_DURATION = 1
-SECRET = "201d573bd7d1344d3a3bfce1550b69102fd11be3db6d379508b6cccc58ea230b"
+SECRET = "7cf59788ab1345df8e820c24651bb867ab44a507448eb8bbf50b7f0bd8472366"
 
 router = APIRouter(prefix="/jwtauth",
                    tags=["jwtauth"],
