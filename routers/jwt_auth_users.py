@@ -1,9 +1,4 @@
-# Clase en vídeo: https://youtu.be/_y9qQZXE24A?t=17664
-
-### Users API con autorización OAuth2 JWT ###
-
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from db.schemas.user import user_schema, users_schema
 from db.models.user import User
@@ -63,7 +58,7 @@ async def current_user(user: User = Depends(auth_user)):
 async def login(form: OAuth2PasswordRequestForm = Depends()):
 
     user_db = search_user_db(form.username)
-
+    print(user_db)
     if not user_db:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="El usuario no es correcto")
