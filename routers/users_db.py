@@ -35,7 +35,7 @@ async def user(user: User):
             status_code=status.HTTP_404_NOT_FOUND, detail="El usuario ya existe")
 
     user_dict = dict(user)
-    del user_dict["id"]
+    del user_dict["id"]  # autogenerado por mongodb
 
     id = db_client.users.insert_one(user_dict).inserted_id
 

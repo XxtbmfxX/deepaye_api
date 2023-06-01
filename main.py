@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from routers import products, users, basic_auth_users, jwt_auth_users, users_db
+from routers import products, users, basic_auth_users, jwt_auth_users, users_db, sustancias
 # from fastapi.staticfiles import StaticFiles
 
 app = FastAPI()
@@ -16,12 +16,13 @@ app.include_router(jwt_auth_users.router)
 
 # Clase en vídeo: https://youtu.be/_y9qQZXE24A?t=20480
 app.include_router(users_db.router)
+app.include_router(sustancias.router)
 
 # Clase en vídeo: https://youtu.be/_y9qQZXE24A?t=13618
 # app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
-# Inicia el server: uvicorn main:app --reload
+# Inicia el server: py -m uvicorn main:app --reload
 # Detener el server: CTRL+C
 
 # Documentación con Swagger: http://127.0.0.1:8000/docs
