@@ -1,6 +1,8 @@
 from fastapi import APIRouter, HTTPException, status
-from db.models.user import User
+from db.models.main import User
 from db.schemas.user import user_schema, users_schema
+from passlib.context import CryptContext
+
 from db.client import db_client
 from bson import ObjectId
 import bcrypt
@@ -9,6 +11,12 @@ import bcrypt
 router = APIRouter(prefix="/userdb",
                    tags=["userdb"],
                    responses={status.HTTP_404_NOT_FOUND: {"message": "No encontrado"}})
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+
+def get_password_hash(password):
+    return pwd_context.hash(password)
 
 
 # Helper
@@ -42,10 +50,12 @@ async def createUser(user: User):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="El usuario ya existe")
 
+    print(user.password)
+    print(user.password.encode('utf-8'))
+
     try:
         # Encriptar la contraseña
-        hashed_password = bcrypt.hashpw(
-            user.password.encode('utf-8'), bcrypt.gensalt())
+        hashed_password = get_password_hash(user.password.encode('utf-8'))
 
         # Crear un diccionario del usuario con la contraseña encriptada
         user_dict = dict(user)
