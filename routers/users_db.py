@@ -1,12 +1,12 @@
+from fastapi import HTTPException, status
 from fastapi import APIRouter, HTTPException, status
-from db.models.main import User
-from db.schemas.user import user_schema, users_schema
+from db.models.models import User
+from db.schemas.user import user_schema,  users_from_db_schema, user_db_schema
 from passlib.context import CryptContext
 
 from db.client import db_client
 from bson import ObjectId
-import bcrypt
-
+from utils.utils import get_user_by_id
 
 router = APIRouter(prefix="/userdb",
                    tags=["userdb"],
@@ -19,39 +19,32 @@ def get_password_hash(password):
     return pwd_context.hash(password)
 
 
-# Helper
-def search_user(field: str, key):
+def get_by_key(key, value):
+    return user_db_schema(db_client.users.find_one({key: value}))
 
-    try:
-        user = db_client.users.find_one({field: key})
-        return User(**user_schema(user))
-    except:
-        return {"error": "No se ha encontrado el usuario"}
 
 # LISTA DE USUARIOS
 
 
-@router.get("/", response_model=list[User])
+@router.get("/")  # response_model=list[User]
 async def users():
-    return users_schema(db_client.users.find())
+    if db_client.users.find():
+        return users_from_db_schema(db_client.users.find())
+    else:
+        return None
 
-# USUARIO ESPECIFICO
 
-
-@router.get("/")  # Query
+@router.get("/one/{id}")  # Query
 async def one_user(id: str):
-    return search_user("_id", ObjectId(id))
+    return get_user_by_id(ObjectId(id))
 
 
 # CREATE USER
 @router.post("/", response_model=User, status_code=status.HTTP_201_CREATED)
 async def createUser(user: User):
-    if type(search_user("email", user.email)) == User:
+    if get_by_key("email", user.email) != None:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="El usuario ya existe")
-
-    print(user.password)
-    print(user.password.encode('utf-8'))
+            status_code=status.HTTP_404_NOT_FOUND, detail="La dirección de correo ya está asociada a un usuario")
 
     try:
         # Encriptar la contraseña
@@ -59,8 +52,7 @@ async def createUser(user: User):
 
         # Crear un diccionario del usuario con la contraseña encriptada
         user_dict = dict(user)
-        user_dict["password"] = hashed_password.decode('utf-8')
-        del user_dict["id"]  # autogenerado por mongodb
+        user_dict["password"] = hashed_password
 
         # Insertar el usuario en la base de datos
         id = db_client.users.insert_one(user_dict).inserted_id
@@ -70,30 +62,45 @@ async def createUser(user: User):
 
     except HTTPException as e:
         return e
+
 # UPDATE USER
 
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-@router.put("/", response_model=User)
-async def update_user(user: User):
 
-    user_dict = dict(user)
-    del user_dict["id"]
+# Endpoint para actualizar un usuario
+@router.put("/{user_id}")
+def update_user(user_id: str, user: User):
+    # Convertir el modelo a un diccionario, eliminando los valores vacíos
+    user_data = user.dict(exclude_unset=True)
 
     try:
-        db_client.users.find_one_and_replace(
-            {"_id": ObjectId(user.id)}, user_dict)
-    except:
-        return {"error": "No se ha actualizado el usuario"}
+        # Verificar si el usuario existe en la base de datos
+        existing_user = db_client.users.find_one({"_id": ObjectId(user_id)})
+        if existing_user is None:
+            raise HTTPException(status_code=404, detail="El usuario no existe")
 
-    return search_user("_id", ObjectId(user.id))
+        # Actualizar el usuario en la base de datos
+        db_client.users.update_one(
+            {"_id": ObjectId(user_id)}, {"$set": user_data})
+
+        return {"message": "Usuario actualizado exitosamente"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 # DELETE USER
+
+ # Still having a little bug but it works
 
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_user(id: str):
-
-    found = db_client.users.find_one_and_delete({"_id": ObjectId(id)})
-
-    if not found:
-        return {"error": "No se ha eliminado el usuario"}
+    try:
+        found = db_client.users.find_one_and_delete({"_id": ObjectId(id)})
+        if found is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="El usuario no fue encontrado")
+        else:
+            return {"message": "Usuario eliminado correctamente"}
+    except Exception as e:
+        return {"datail": e}
