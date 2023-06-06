@@ -9,13 +9,6 @@ app.include_router(jwt_auth_users.router)
 app.include_router(users_db.router)
 app.include_router(sustancias.router)
 
-app.get("/")
-
-
-def dummy_end():
-    print(db_client)
-    return {"connection": "succesfull"}
-
 
 # Inicia el server:
 # py -m uvicorn main:app --reload
