@@ -20,7 +20,11 @@ def get_password_hash(password):
 
 
 def get_by_key(key, value):
-    return user_db_schema(db_client.users.find_one({key: value}))
+    # error handling on pettition to database
+    if db_client.users.find({key: value}):
+        return user_db_schema(db_client.users.find({key: value}))
+    else:
+        return None
 
 
 # LISTA DE USUARIOS

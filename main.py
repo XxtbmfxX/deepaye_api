@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from routers import jwt_auth_users, users_db, sustancias
+from db.client import db_client
 
 app = FastAPI()
 
@@ -7,6 +8,13 @@ app = FastAPI()
 app.include_router(jwt_auth_users.router)
 app.include_router(users_db.router)
 app.include_router(sustancias.router)
+
+app.get("/")
+
+
+def dummy_end():
+    print(db_client)
+    return {"connection": "succesfull"}
 
 
 # Inicia el server:
