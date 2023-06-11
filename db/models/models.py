@@ -12,8 +12,9 @@ class TokenData(BaseModel):
 
 
 class User(BaseModel):
+    id: str | None = None
     username: str
-    password: str
+    password: str | None = None
     email: str | None = None
     disabled: bool | None = None
 

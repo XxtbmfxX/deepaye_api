@@ -7,7 +7,8 @@ from jose import JWTError, jwt
 from passlib.context import CryptContext
 
 from db.models.models import User, UserInDB, TokenData
-from db.schemas.user import users_schema, user_schema
+from db.schemas.user import users_schema, user_schema, users_from_db_schema, user_db_schema
+from bson import ObjectId
 
 from db.client import db_client
 
@@ -33,8 +34,8 @@ def get_password_hash(password):
     return pwd_context.hash(password)
 
 
-def get_user_by_id(id):
-    return user_schema(db_client.users.find_one({"username": id}))
+def get_user_by_id(id: ObjectId):
+    return user_db_schema(db_client.users.find_one({"_id": id}))
 
 
 def get_user(username: str):
